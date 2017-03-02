@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 
 namespace CashCard
 {
@@ -13,15 +12,8 @@ namespace CashCard
 
         public int Balance
         {
-            get
-            {
-                return _balance;
-            }
-
-            private set
-            {
-                _balance = value;
-            }
+            get { return _balance; }
+            private set { _balance = value; }
         }
 
         public PrepaidCard(int[] pin)

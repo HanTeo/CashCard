@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 
 namespace CashCard
 {
@@ -6,9 +7,22 @@ namespace CashCard
     {
         private readonly int[] _pin;
         private readonly object _locker;
+        private volatile int _balance;
 
         public bool Authenticated { get; private set; }
-        public int Balance { get; private set; }
+
+        public int Balance
+        {
+            get
+            {
+                return _balance;
+            }
+
+            private set
+            {
+                _balance = value;
+            }
+        }
 
         public PrepaidCard(int[] pin)
         {

@@ -28,9 +28,10 @@ namespace CashCard.Tests
         {
             var pin = new[] {1, 2, 3, 4};
             var card = new PrepaidCard(pin);
-            var wrongPin = new[] {0, 0, 0, 0};
+            var wrongPin = new[] {4, 3, 2, 1};
 
             Assert.Throws<WrongPinException>(() => card.Authenticate(wrongPin));
+            Assert.False(card.Authenticated);
         }
 
         [Test]
@@ -67,7 +68,7 @@ namespace CashCard.Tests
         }
 
         [Test]
-        public void CanAddNegativeAmount()
+        public void CannotAddNegativeAmount()
         {
             var pin = new[] {1, 2, 3, 4};
             var card = new PrepaidCard(pin);
@@ -101,7 +102,7 @@ namespace CashCard.Tests
         }
 
         [Test]
-        public void CanWithdrawIfAuthenticatedAndSufficientAmount()
+        public void CanWithdrawIfAuthenticatedAndSufficientBalance()
         {
             var pin = new[] {1, 2, 3, 4};
             var card = new PrepaidCard(pin);
@@ -114,7 +115,7 @@ namespace CashCard.Tests
         }
 
         [Test]
-        public void CannotWithdrawIfAuthenticatedButInsufficientAmount()
+        public void CannotWithdrawIfAuthenticatedButInsufficientBalance()
         {
             var pin = new[] {1, 2, 3, 4};
             var card = new PrepaidCard(pin);
@@ -122,7 +123,7 @@ namespace CashCard.Tests
             card.Authenticate(pin);
             card.Add(10);
 
-            Assert.Throws<InsufficientBalanceException>(()=> card.Withdraw(20));
+            Assert.Throws<InsufficientBalanceException>(() => card.Withdraw(20));
             Assert.AreEqual(10, card.Balance);
         }
     }

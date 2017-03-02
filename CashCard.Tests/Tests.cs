@@ -28,10 +28,9 @@ namespace CashCard.Tests
         {
             var pin = new[] {1, 2, 3, 4};
             var card = new PrepaidCard(pin);
+            var wrongPin = new[] {0, 0, 0, 0};
 
-            card.Authenticate(new[] {0, 0, 0, 0});
-
-            Assert.False(card.Authenticated);
+            Assert.Throws<WrongPinException>(() => card.Authenticate(wrongPin));
         }
 
         [Test]
@@ -50,9 +49,8 @@ namespace CashCard.Tests
         {
             var pin = new[] {1, 2, 3, 4};
             var card = new PrepaidCard(pin);
-            var isAdded = card.Add(10);
 
-            Assert.False(isAdded);
+            Assert.Throws<UnauthenticatedException>(() => card.Add(10));
             Assert.AreEqual(0, card.Balance);
         }
 
@@ -62,12 +60,22 @@ namespace CashCard.Tests
             var pin = new[] {1, 2, 3, 4};
             var card = new PrepaidCard(pin);
 
-            var isAuthenticated = card.Authenticate(pin);
-            var isAdded = card.Add(10);
+            card.Authenticate(pin);
+            card.Add(10);
 
-            Assert.True(isAuthenticated);
-            Assert.True(isAdded);
             Assert.AreEqual(10, card.Balance);
+        }
+
+        [Test]
+        public void CanAddNegativeAmount()
+        {
+            var pin = new[] {1, 2, 3, 4};
+            var card = new PrepaidCard(pin);
+
+            card.Authenticate(pin);
+
+            Assert.Throws<NegativeAmountException>(() => card.Add(-10));
+            Assert.AreEqual(0, card.Balance);
         }
 
         [Test]
@@ -76,9 +84,19 @@ namespace CashCard.Tests
             var pin = new[] {1, 2, 3, 4};
             var card = new PrepaidCard(pin);
 
-            var canWithdraw = card.Withdraw(10);
+            Assert.Throws<UnauthenticatedException>(() => card.Withdraw(10));
+            Assert.AreEqual(0, card.Balance);
+        }
 
-            Assert.False(canWithdraw);
+        [Test]
+        public void CannotWithdrawNegativeAmount()
+        {
+            var pin = new[] {1, 2, 3, 4};
+            var card = new PrepaidCard(pin);
+
+            card.Authenticate(pin);
+
+            Assert.Throws<NegativeAmountException>(() => card.Withdraw(-10));
             Assert.AreEqual(0, card.Balance);
         }
 
@@ -89,11 +107,9 @@ namespace CashCard.Tests
             var card = new PrepaidCard(pin);
 
             card.Authenticate(pin);
-            var isAdded = card.Add(20);
-            var canWithdraw = card.Withdraw(10);
+            card.Add(20);
+            card.Withdraw(10);
 
-            Assert.True(isAdded);
-            Assert.True(canWithdraw);
             Assert.AreEqual(10, card.Balance);
         }
 
@@ -104,11 +120,9 @@ namespace CashCard.Tests
             var card = new PrepaidCard(pin);
 
             card.Authenticate(pin);
-            var isAdded = card.Add(10);
-            var canWithdraw = card.Withdraw(20);
+            card.Add(10);
 
-            Assert.True(isAdded);
-            Assert.False(canWithdraw);
+            Assert.Throws<InsufficientBalanceException>(()=> card.Withdraw(20));
             Assert.AreEqual(10, card.Balance);
         }
     }

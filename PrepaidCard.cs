@@ -5,12 +5,10 @@ namespace CashCard
     public class PrepaidCard
     {
         private readonly int[] _pin;
-        private volatile int _balance;
-        private volatile bool _authenticated;
         private readonly object _locker;
 
-        public bool Authenticated => _authenticated;
-        public int Balance => _balance;
+        public bool Authenticated { get; private set; }
+        public int Balance { get; private set; }
 
         public PrepaidCard(int[] pin)
         {
@@ -18,59 +16,67 @@ namespace CashCard
             _locker = new object();
         }
 
-        public bool Authenticate(int[] pin)
+        public void Authenticate(int[] pin)
         {
             lock (_locker)
             {
                 if (!pin.SequenceEqual(_pin))
                 {
-                    return false;
+                    throw new WrongPinException();
                 }
 
-                _authenticated = true;
+                Authenticated = true;
             }
-
-            return true;
         }
 
-        public bool Add(int amount)
+        public void Add(int amount)
         {
             lock(_locker)
             {
-                if (!Authenticated)
-                {
-                    return false;
-                }
+                GuardAgainstNotAuthenticated();
 
-                if (amount <= 0)
-                {
-                    return false;
-                }
+                GuardAgainstNegative(amount);
 
-                _balance += amount;
+                Balance += amount;
             }
-
-            return true;
         }
 
-        public bool Withdraw(int amount)
+        public void Withdraw(int amount)
         {
             lock (_locker)
             {
-                if (!Authenticated)
-                {
-                    return false;
-                }
+                GuardAgainstNotAuthenticated();
 
-                if (Balance < amount)
-                {
-                    return false;
-                }
+                GuardAgainstNegative(amount);
 
-                _balance -= amount;
+                GuardAgainstInsufficientBalance(amount);
+
+                Balance -= amount;
             }
+        }
 
-            return true;
+        private void GuardAgainstInsufficientBalance(int amount)
+        {
+            if (Balance < amount)
+            {
+                throw new InsufficientBalanceException();
+            }
+        }
+
+        private static void GuardAgainstNegative(int amount)
+        {
+            if (amount < 0)
+            {
+                throw new NegativeAmountException();
+            }
+        }
+
+        private void GuardAgainstNotAuthenticated()
+        {
+            if (!Authenticated)
+            {
+                throw new UnauthenticatedException();
+            }
         }
     }
 }

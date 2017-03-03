@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Threading;
 
 namespace CashCard
 {
@@ -6,20 +7,21 @@ namespace CashCard
     {
         private readonly int[] _pin;
         private readonly object _locker;
-        private volatile int _balance;
+        private readonly ThreadLocal<bool> _authenticated;
 
-        public bool Authenticated { get; private set; }
-
-        public int Balance
+        public bool Authenticated
         {
-            get { return _balance; }
-            private set { _balance = value; }
+            get { return _authenticated.Value; }
+            private set { _authenticated.Value = value; }
         }
+
+        public int Balance { get; private set; }
 
         public PrepaidCard(int[] pin)
         {
             _pin = pin;
             _locker = new object();
+            _authenticated = new ThreadLocal<bool>(false);
         }
 
         public void Authenticate(int[] pin)
@@ -37,11 +39,11 @@ namespace CashCard
 
         public void Add(int amount)
         {
+            GuardAgainstNegative(amount);
+
             lock(_locker)
             {
                 GuardAgainstNotAuthenticated();
-
-                GuardAgainstNegative(amount);
 
                 Balance += amount;
             }
@@ -49,11 +51,11 @@ namespace CashCard
 
         public void Withdraw(int amount)
         {
+            GuardAgainstNegative(amount);
+
             lock (_locker)
             {
                 GuardAgainstNotAuthenticated();
-
-                GuardAgainstNegative(amount);
 
                 GuardAgainstInsufficientBalance(amount);
 

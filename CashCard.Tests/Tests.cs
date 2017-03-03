@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using System.Threading.Tasks;
+using NUnit.Framework;
 
 namespace CashCard.Tests
 {
@@ -103,6 +104,20 @@ namespace CashCard.Tests
 
             Assert.Throws<InsufficientBalanceException>(() => _card.Withdraw(20));
             Assert.AreEqual(10, _card.Balance);
+        }
+
+        [Test]
+        public async Task AuthenticatedIsPerThread()
+        {
+            var threadA = Task.Run(() =>
+            {
+                _card.Authenticate(_pin);
+                return _card.Authenticated;
+            });
+
+            var threadB = Task.Run(() => _card.Authenticated);
+
+            Assert.AreNotEqual(await threadA, await threadB);
         }
     }
 }

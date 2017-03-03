@@ -107,17 +107,67 @@ namespace CashCard.Tests
         }
 
         [Test]
-        public async Task AuthenticatedIsPerThread()
+        public void ThreadLocalAuthenticationTest()
         {
-            var threadA = Task.Run(() =>
+            var taskA = Task.Run(() =>
             {
                 _card.Authenticate(_pin);
-                return _card.Authenticated;
+                _card.Add(100);
             });
 
-            var threadB = Task.Run(() => _card.Authenticated);
+            var taskB = Task.Run(() => _card.Add(50));
 
-            Assert.AreNotEqual(await threadA, await threadB);
+            Assert.DoesNotThrowAsync(async () => await taskA);
+            Assert.ThrowsAsync<UnauthenticatedException>(async () => await taskB);
+            Assert.AreEqual(100, _card.Balance);
+            Assert.False(_card.Authenticated);
+        }
+
+        [Test]
+        public void ThreadCollisionDeterministicTest()
+        {
+            _card.Authenticate(_pin);
+            _card.Add(10000000);
+
+            var taskA =Task.Run(() =>
+            {
+                _card.Authenticate(_pin);
+                for (var i = 0; i < 5000000; i++)
+                {
+                    _card.Add(1);
+                }
+            });
+
+            var taskB = Task.Run(() =>
+            {
+                _card.Authenticate(_pin);
+                for (var i = 0; i < 5000000; i++)
+                {
+                    _card.Withdraw(1);
+                }
+            });
+
+            var taskC =Task.Run(() =>
+            {
+                _card.Authenticate(_pin);
+                for (var i = 0; i < 5000000; i++)
+                {
+                    _card.Add(1);
+                }
+            });
+
+            var taskD = Task.Run(() =>
+            {
+                _card.Authenticate(_pin);
+                for (var i = 0; i < 5000000; i++)
+                {
+                    _card.Withdraw(1);
+                }
+            });
+
+            Task.WaitAll(taskA, taskB, taskC, taskD);
+
+            Assert.AreEqual(10000000, _card.Balance);
         }
     }
 }

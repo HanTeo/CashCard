@@ -48,7 +48,10 @@ namespace CashCard
 
             GuardAgainstNotAuthenticated();
 
-            Interlocked.Add(ref _balance, amount);
+            lock (_locker)
+            {
+                Balance += amount;
+            }
         }
 
         public void Withdraw(int amount)

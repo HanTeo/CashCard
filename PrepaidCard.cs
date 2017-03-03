@@ -8,7 +8,6 @@ namespace CashCard
         private readonly int[] _pin;
         private readonly object _locker;
         private readonly ThreadLocal<bool> _authenticated;
-        private int _balance;
 
         public bool Authenticated
         {
@@ -16,11 +15,7 @@ namespace CashCard
             private set { _authenticated.Value = value; }
         }
 
-        public int Balance
-        {
-            get { return _balance; }
-            private set { _balance = value; }
-        }
+        public int Balance { get; private set; }
 
         public PrepaidCard(int[] pin)
         {
